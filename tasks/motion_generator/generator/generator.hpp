@@ -52,8 +52,6 @@ private:
 private:
     bool init_motion_generator();
 
-    
-
 };
 
 } // namespace motion_generator

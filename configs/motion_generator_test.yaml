@@ -2,20 +2,20 @@
 
 # 需要生成的运动类别
   # // spin
-  # SineSpin,
-  # UniformSpin,
-  # RandomSpin,
+  # SineSpin : 0
+  # UniformSpin : 1
+  # RandomSpin : 2
   
   # // translate
-  # UniformTranslate,
-  # VariationTranslate,
+  # UniformTranslate : 3
+  # VariationTranslate : 4
 
   # // mixed
-  # SineUniform,
-  # SineVariation,
-  # UniformUniform,
-  # UniformVariation,
-  # RandomUniform,
-  # RandomVariation
+  # SineUniform : 5
+  # SineVariation : 6
+  # UniformUniform : 7
+  # UniformVariation : 8
+  # RandomUniform : 9
+  # RandomVariation : 10
 
-morion_type: UniformSpin
+motion_type: 1

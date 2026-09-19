@@ -8,6 +8,9 @@ namespace motion_generator
 
 class SpinUniformGenerator : public SpinBase
 {
+public:
+    
+private:
 
 };
 
