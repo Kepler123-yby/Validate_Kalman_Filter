@@ -1,8 +1,11 @@
 #include "generator.hpp"
 
-namespace tools
+namespace motion_generator
 {
 
+Generator::Generator(const YAML::Node& config)
+{
+    
+}
 
-
-} // namespace tools
+} // namespace motion_generator
