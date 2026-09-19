@@ -1,0 +1,21 @@
+# 运动相关设置
+
+# 需要生成的运动类别
+  # // spin
+  # SineSpin,
+  # UniformSpin,
+  # RandomSpin,
+  
+  # // translate
+  # UniformTranslate,
+  # VariationTranslate,
+
+  # // mixed
+  # SineUniform,
+  # SineVariation,
+  # UniformUniform,
+  # UniformVariation,
+  # RandomUniform,
+  # RandomVariation
+
+morion_type: UniformSpin
