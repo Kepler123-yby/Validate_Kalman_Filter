@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include "tools/math_tools/math_tools.hpp"
 
 namespace motion_generator
 {
@@ -12,11 +13,19 @@ struct Armor
 
     int id;                         // 当前装甲板id
     Eigen::Vector3d tvec;           // 世界系xyz坐标
-    Eigen::Vector4d rvec;           // 世界系ypr
+    Eigen::Vector3d rvec;           // 世界系ypr
 
-    Eigen::Vector3d ypda;           // 观测值
+    Eigen::Vector4d ypda;           // 观测值
 
-    bool get_observation(const double x, const double y, const double z, const double yaw, const cv::Mat& center2armor);
+    bool get_observation(const Eigen::Vector3d& center_in_world, const double radius, const double yaw);
+};
+
+class Robot
+{
+public:
+    
+private:
+    std::vector<Armor> armor_;
 };
 } // namespace motion_generator
 
