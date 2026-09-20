@@ -19,3 +19,11 @@
   # RandomVariation : 10
 
 motion_type: 1
+
+number_of_sine_functions: 1
+
+# 下列内容长度需要和number_of_sine_functions对应
+A_lists: []
+f_lists: []
+phi_lists: []
+x_lists: []
