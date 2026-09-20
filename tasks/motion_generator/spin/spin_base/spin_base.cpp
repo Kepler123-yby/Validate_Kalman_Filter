@@ -2,9 +2,9 @@
 
 namespace motion_generator
 {
-SpinBase::SpinBase(const int number_of_sine_functions)
-    : number_of_sine_functions_(number_of_sine_functions)
+SpinBase::SpinBase(const YAML::Node& config)
 {
+    number_of_sine_functions_ = config["number_of_sine_functions"] ? config["number_of_sine_functions"].as<int>() : 1;
     
 }
 } // namespace motion_generator

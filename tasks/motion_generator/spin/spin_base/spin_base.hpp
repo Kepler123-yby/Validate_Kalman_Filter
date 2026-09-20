@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "tools/sine_fuction/sine_fuction.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace motion_generator
 {
@@ -11,7 +12,7 @@ namespace motion_generator
 class SpinBase
 {
 public:
-    SpinBase(const int number_of_sine_functions);
+    SpinBase(const YAML::Node& config);
     virtual ~SpinBase() = default;
 private:
     int number_of_sine_functions_; // 正弦函数的数量

@@ -45,12 +45,10 @@ public:
     ~Generator() = default;
 
 private:
-    MotionType motion_types_;                       // 生成运动类型
-    std::shared_ptr<SpinBase> spin_;                // 自旋运动基类
-    std::shared_ptr<TranslationBase> translate_;    // 平移运动基类
+    YAML::Node config_;
 
 private:
-    bool init_motion_generator();
+    bool init_motion_generator() const; // 初始化运动生成器
 
 };
 
