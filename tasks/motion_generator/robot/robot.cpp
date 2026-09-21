@@ -3,13 +3,14 @@
 namespace motion_generator
 {
 
-bool Armor::get_observation(const Eigen::Vector3d& center_in_world, const double radius, const double yaw)
+bool Armor::get_observation(const int id, const Eigen::Vector3d& center_in_world, const double radius, const double height_diff, const double yaw)
 {
     try
     {
-        tvec = center_in_world + Eigen::Vector3d(radius * std::cos(yaw), radius * std::sin(yaw), 0);
-        rvec = Eigen::Vector3d(yaw, center_pitch, 0);
-        ypda = Eigen::Vector4d(tvec(0), tvec(1), tvec(2), rvec(0));
+        id_ = id;
+        tvec_ = center_in_world + Eigen::Vector3d(radius * std::cos(yaw), radius * std::sin(yaw), 0);
+        rvec_ = Eigen::Vector3d(yaw, center_pitch, 0);
+        ypda_ = Eigen::Vector4d(tvec_(0), tvec_(1), tvec_(2), rvec_(0));
     }
     catch (const std::exception& e)
     {
@@ -17,6 +18,25 @@ bool Armor::get_observation(const Eigen::Vector3d& center_in_world, const double
     }
 
     return true;
+}
+
+Robot::Robot(const double x, const double y, const double z, const double radius_short, const double radius_long, const double height_diff, const int armor_num = 4)
+: center_location_(x, y, z), radius_short_(radius_short), radius_long_(radius_long), height_diff_(height_diff)
+{
+    armors_.reserve(armor_num);
+    for (int i = 0; i < armor_num; ++i)
+    {
+        double yaw = (i - 1) * M_PI / 2;
+        Armor armor;
+        double radius = i % 2 == 0 ? radius_short_ : radius_long_;
+        armor.get_observation(i, center_location_, radius, height_diff_, yaw);
+        armors_.push_back(armor);
+    }
+}
+
+void Robot::get_states(const cv::Mat& trans_mat, const Eigen::VectorXd& states) const
+{
+    
 }
 
 } // namespace motion_generator
