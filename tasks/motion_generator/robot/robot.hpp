@@ -3,7 +3,9 @@
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include <chrono>
 #include "tools/math_tools/math_tools.hpp"
+#include "tools/sine_fuction/sine_fuction.hpp"
 
 namespace motion_generator
 {
@@ -31,10 +33,15 @@ public:
     void get_observation(const cv::Mat& trans_mat) const;
 private:
     Eigen::Vector3d center_location_;
+    std::chrono::steady_clock::time_point start_time_;
     double radius_short_;
     double radius_long_;
     double height_diff_;
     std::vector<Armor> armors_;
+    std::vector<tools::SineFunction> sine_function_;
+
+private:
+    double calculate_spin_state() const;
 };
 } // namespace motion_generator
 
