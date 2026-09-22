@@ -17,8 +17,9 @@ struct SineFunction
     SineFunction(double amplitude, double frequency, double phase, double x)
         : A(amplitude), f(frequency), phi(phase), x(x) {}
 
-    double evaluate(double t) const
+    double evaluate(const std::chrono::steady_clock::time_point& time) const
     {
+        auto t = std::chrono::duration<double>(time.time_since_epoch()).count();
         return A * std::sin(f * t + phi) + x;
     }
 
@@ -27,12 +28,6 @@ struct SineFunction
         auto t = std::chrono::duration<double>(time.time_since_epoch()).count();
         return A * f * std::cos(f * t + phi);
     }
-
-    double get_all_theta(const std::chrono::steady_clock::time_point& time1, const std::chrono::steady_clock::time_point& time2)
-    {
-        return integral(time1) - integral(time2);
-    }
-
 };
 
 } // namespace tools

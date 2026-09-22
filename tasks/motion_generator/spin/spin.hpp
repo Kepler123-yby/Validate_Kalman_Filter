@@ -9,14 +9,20 @@
 namespace motion_generator
 {
 
-class SpinBase
+struct SpinState 
+{
+    double speed{0};
+    double yaw{0};
+};
+
+
+class SpinGenerator
 {
 public:
-    SpinBase(const YAML::Node& config);
-    virtual ~SpinBase() = default;
+    SpinGenerator(const YAML::Node& config);
+    ~SpinGenerator() = default;
 
-    virtual double get_states() const;
-    
+    double get_states(const std::chrono::steady_clock::time_point & t) const;
 
 protected:
     int number_of_sine_functions_; // 正弦函数的数量
@@ -27,6 +33,9 @@ protected:
     std::vector<double> f_lists_;
     std::vector<double> phi_lists_;
     std::vector<double> x_lists_;
+
+private:
+    SpinState evaluate() const;
 };
 
 } // namespace motion_generator

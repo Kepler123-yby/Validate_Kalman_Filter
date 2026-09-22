@@ -1,25 +1,6 @@
 # 运动相关设置
 
-# 需要生成的运动类别
-  # // spin
-  # SineSpin : 0
-  # UniformSpin : 1
-  # RandomSpin : 2
-  
-  # // translate
-  # UniformTranslate : 3
-  # VariationTranslate : 4
-
-  # // mixed
-  # SineUniform : 5
-  # SineVariation : 6
-  # UniformUniform : 7
-  # UniformVariation : 8
-  # RandomUniform : 9
-  # RandomVariation : 10
-
-motion_type: 1
-
+# 自旋
 number_of_sine_functions: 1
 
 # 下列内容长度需要和number_of_sine_functions对应
@@ -27,3 +8,31 @@ A_lists: []
 f_lists: []
 phi_lists: []
 x_lists: []
+
+translation:
+  initial:
+    position: [0.0, 0.0, 0.0]
+    velocity: [0.0, 0.0, 0.0]
+
+  # 使用余弦轨迹在 start 和 end 之间往返，端点速度为 0
+  line:
+    start: [-1.0, 0.0, 0.0]
+    end: [1.0, 0.0, 0.0]
+    one_way_time: 2.0
+
+  # RANDOM 模式随机生成目标速度，再施加加速度和 jerk 限制
+  random:
+    velocity_min: [-3.0, -2.0, 0.0]
+    velocity_max: [3.0, 2.0, 0.0]
+    max_acceleration: 4.0
+    max_jerk: 12.0
+    response_time: 0.25
+    hold_time_min: 0.4
+    hold_time_max: 2.0
+    stop_probability: 0.15
+    reverse_probability: 0.20
+    integration_step: 0.01
+    seed: 42
+
+# 平移模式：0/LINE 为两点间变速往返；1/RANDOM 为受约束随机运动
+translation_mode: 0

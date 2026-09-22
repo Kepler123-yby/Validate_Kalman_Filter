@@ -32,10 +32,13 @@ Robot::Robot(const double x, const double y, const double z, const double radius
         armor.get_observation(i, center_location_, radius, height_diff_, yaw);
         armors_.push_back(armor);
     }
+    start_time_ = std::chrono::steady_clock::now();
 }
 
 void Robot::get_states(const cv::Mat& trans_mat, const Eigen::VectorXd& states) const
 {
+    auto current_time = std::chrono::steady_clock::now();
+    auto dt = tools::delta_time(start_time_, current_time);
     
 }
 
