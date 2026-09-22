@@ -1,13 +1,14 @@
 # 运动相关设置
 
 # 自旋
-number_of_sine_functions: 1
+spin:
+  number_of_sine_functions: 1
 
-# 下列内容长度需要和number_of_sine_functions对应
-A_lists: []
-f_lists: []
-phi_lists: []
-x_lists: []
+  # 下列内容长度需要和number_of_sine_functions对应
+  A_lists: []
+  f_lists: []
+  phi_lists: []
+  x_lists: []
 
 translation:
   initial:
