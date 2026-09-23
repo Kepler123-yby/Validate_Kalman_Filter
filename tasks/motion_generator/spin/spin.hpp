@@ -19,7 +19,8 @@ struct SpinState
 class SpinGenerator
 {
 public:
-    SpinGenerator(const YAML::Node& config);
+    explicit SpinGenerator(const YAML::Node& config);
+    SpinGenerator() = default;
     ~SpinGenerator() = default;
 
     double get_states(const std::chrono::steady_clock::time_point & t) const;

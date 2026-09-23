@@ -20,18 +20,16 @@ SpinGenerator::SpinGenerator(const YAML::Node& config)
     }
 }
 
- SpinState SpinGenerator::evaluate() const
- {  
-    SpinState state;
-    auto time = std::chrono::steady_clock::now();
-    for (auto sine_function : sine_functions_)
-    {
-        state.speed += sine_function.integral(time);
-        state.yaw += sine_function.evaluate(time);
-    }
-    return state;
- }
-
-
+SpinState SpinGenerator::evaluate() const
+{  
+SpinState state;
+auto time = std::chrono::steady_clock::now();
+for (auto sine_function : sine_functions_)
+{
+    state.speed += sine_function.integral(time);
+    state.yaw += sine_function.evaluate(time);
+}
+return state;
+}
 
 } // namespace motion_generator
