@@ -1,5 +1,11 @@
 # 运动相关设置
 
+# Robot
+robot:
+  armor_nums: 4
+  init_states: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 54, 50, 5]
+  detect_threshold: []
+
 # 自旋
 spin:
   number_of_sine_functions: 1
@@ -10,7 +16,9 @@ spin:
   phi_lists: []
   x_lists: []
 
+# 平移
 translation:
+  translation_mode: 0
   initial:
     position: [0.0, 0.0, 0.0]
     velocity: [0.0, 0.0, 0.0]
@@ -34,6 +42,3 @@ translation:
     reverse_probability: 0.20
     integration_step: 0.01
     seed: 42
-
-# 平移模式：0/LINE 为两点间变速往返；1/RANDOM 为受约束随机运动
-translation_mode: 0

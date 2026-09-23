@@ -3,46 +3,56 @@
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include <yaml-cpp/yaml.h>
 #include <chrono>
+
 #include "tools/math_tools/math_tools.hpp"
 #include "tools/sine_fuction/sine_fuction.hpp"
 
 namespace motion_generator
 {
+
 struct Armor
 {
-    const double center_pitch = 15; // 装甲板到旋转中心的pitch上的偏移
+    int id_;
+    Eigen::VectorXd observation;
 
-    int id_;                         // 当前装甲板id
-    Eigen::Vector3d tvec_;           // 世界系xyz坐标
-    Eigen::Vector3d rvec_;           // 世界系ypr
-
-    Eigen::Vector4d ypda_;           // 观测值
-
-    bool get_observation(const int id, const Eigen::Vector3d& center_in_world, const double radius, const double height_diff, const double yaw);
+    Armor(const int id);
 };
 
 class Robot
 {
 public:
-    Robot(const double x, const double y, const double z, const double radius_short, const double radius_long, const double, const int armor_num);
+    Robot() = default;
+    Robot(const YAML::Node&);
     ~Robot() = default;
 
-    void get_states(const cv::Mat& trans_mat, const Eigen::VectorXd& states) const;
+    // 禁止拷贝
+    Robot(const Robot&) = delete;
+    Robot& operator=(const Robot&) = delete;
 
-    void get_observation(const cv::Mat& trans_mat) const;
+    Eigen::VectorXd get_states() { return this->states_; };
+
+    const Eigen::VectorXd& get_observation() const;
+    Eigen::VectorXd& get_observation();
+
 private:
-    Eigen::Vector3d center_location_;
-    std::chrono::steady_clock::time_point start_time_;
-    double radius_short_;
-    double radius_long_;
-    double height_diff_;
     std::vector<Armor> armors_;
-    std::vector<tools::SineFunction> sine_function_;
+    
+    Eigen::VectorXd states_;
+    int locked_id_{0};
+
+    cv::Mat raw2states_mat_;
+    cv::Mat raw2observation_mat_;
 
 private:
-    double calculate_spin_state() const;
+    // raw_states: x vx ax y vy ay z vz az angle w aw r dl height 
+    void raw2states(const Eigen::VectorXd& raw_states);
+
+    void raw2observation(const Eigen::VectorXd& raw_states);
+
 };
+
 } // namespace motion_generator
 
 #endif // _ROBOT_HPP_
