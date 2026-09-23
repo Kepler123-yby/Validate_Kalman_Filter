@@ -3,6 +3,8 @@
 
 #include <yaml-cpp/yaml.h>
 #include <memory>
+#include <mutex>
+#include <thread>
 
 #include "spin/spin.hpp"
 #include "translate/translate.hpp"
@@ -20,11 +22,13 @@ public:
     ~Generator() = default;
 
 private:
-    YAML::Node config_;
+    std::unique_ptr<TranslationGenerator> translation_;
+    std::unique_ptr<SpinGenerator> spin_;
+    std::mutex state_;
+    std::thread motion_thread_;
 
 private:
-    bool init_motion_generator() const; // 初始化运动生成器
-
+    
 };
 
 } // namespace motion_generator
