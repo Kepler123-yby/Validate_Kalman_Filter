@@ -4,7 +4,10 @@
 robot:
   armor_nums: 4
   init_states: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 54, 50, 5]
-  detect_threshold: []
+  detect_min_threshold: -60.0
+  detect_max_threshold: 60.0
+  raw2state_mat: []
+  raw2observation_mat: []
 
 # 自旋
 spin:

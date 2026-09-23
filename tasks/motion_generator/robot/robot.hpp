@@ -42,6 +42,9 @@ private:
     Eigen::VectorXd states_;
     int locked_id_{0};
 
+    double detect_min_threshold_;
+    double detect_max_threshold_;
+
     cv::Mat raw2states_mat_;
     cv::Mat raw2observation_mat_;
 

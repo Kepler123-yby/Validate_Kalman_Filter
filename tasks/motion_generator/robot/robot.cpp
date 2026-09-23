@@ -18,6 +18,11 @@ Robot::Robot(const YAML::Node& config)
     {
         armors_.emplace_back(i);
     }
+    
+    detect_min_threshold_ = robot_config_["detect_min_threshold"] ? robot_config_["detect_min_threshold"].as<double>() : -60.0;
+    detect_max_threshold_ = robot_config_["detect_max_threshold"] ? robot_config_["detect_max_threshold"].as<double>() : 60.0;
+
+    
 }
 
 const Eigen::VectorXd& Robot::get_observation() const
