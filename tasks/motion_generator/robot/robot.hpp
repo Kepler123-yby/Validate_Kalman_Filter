@@ -2,12 +2,10 @@
 #define _ROBOT_HPP_
 
 #include <Eigen/Dense>
-#include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
-#include <chrono>
+#include <vector>
 
 #include "tools/math_tools/math_tools.hpp"
-#include "tools/sine_fuction/sine_fuction.hpp"
 
 namespace motion_generator
 {
@@ -15,44 +13,53 @@ namespace motion_generator
 struct Armor
 {
     int id_;
-    Eigen::VectorXd observation;
+    Eigen::Vector4d observation;
 
-    Armor(const int id);
+    explicit Armor(const int id);
 };
 
 class Robot
 {
 public:
-    Robot() = default;
-    Robot(const YAML::Node&);
+    Robot() = delete;
+    explicit Robot(const YAML::Node& config);
     ~Robot() = default;
 
     // 禁止拷贝
     Robot(const Robot&) = delete;
     Robot& operator=(const Robot&) = delete;
 
-    Eigen::VectorXd get_states() { return this->states_; };
+    const Eigen::VectorXd& get_states() const { return states_; }
 
-    const Eigen::VectorXd& get_observation() const;
-    Eigen::VectorXd& get_observation();
+    const Eigen::Vector4d& get_observation() const;
+    Eigen::Vector4d& get_observation();
+
+    int get_locked_id() const { return locked_id_; }
+    int get_switch_times() const { return switch_times_; }
+
+    void update_state(const Eigen::VectorXd& raw_state);
 
 private:
     std::vector<Armor> armors_;
     
     Eigen::VectorXd states_;
     int locked_id_{0};
+    int switch_times_{0};
 
-    double detect_min_threshold_;
-    double detect_max_threshold_;
+    double detect_min_threshold_{-60.0};
+    double detect_max_threshold_{60.0};
 
-    cv::Mat raw2states_mat_;
-    cv::Mat raw2observation_mat_;
+    Eigen::MatrixXd raw2states_mat_;
+
+    int armor_nums_{4};
 
 private:
     // raw_states: x vx ax y vy ay z vz az angle w aw r dl height 
     void raw2states(const Eigen::VectorXd& raw_states);
 
     void raw2observation(const Eigen::VectorXd& raw_states);
+
+    void update_locked_id();
 
 };
 

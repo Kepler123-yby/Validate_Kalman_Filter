@@ -16,6 +16,8 @@ double delta_time(const std::chrono::steady_clock::time_point& start_time, const
 double delta_euler(const double euler1, const double euler2);
 
 double angle_to_euler(const double angle);
+
+Eigen::Vector3d xyz_to_ypd(const Eigen::Vector3d& xyz);
 } // namespace tools
 
-#endif // _MATH_TOOLS_HPP_  
+#endif // _MATH_TOOLS_HPP_

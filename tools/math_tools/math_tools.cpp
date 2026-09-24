@@ -1,4 +1,6 @@
 #include "math_tools.hpp"
+#include <cmath>
+#include <Eigen/Dense>
 
 namespace tools
 {
@@ -24,4 +26,15 @@ double angle_to_euler(const double angle)
     return angle * 180.0 / M_PI;
 }
 
+Eigen::Vector3d xyz_to_ypd(const Eigen::Vector3d& xyz)
+{
+    double x = xyz[0], y = xyz[1], z = xyz[2];
+    double yaw = std::atan2(y, x);
+    double distance_2d = std::hypot(x, y);
+    double pitch = std::atan2(z, distance_2d);
+    double distance = std::hypot(distance_2d, z);
+    Eigen::Vector3d ypd = Eigen::Vector3d(yaw, pitch, distance);
+    return ypd;
 }
+
+} // namespace tools
