@@ -21,7 +21,7 @@ struct Armor
 class Robot
 {
 public:
-    Robot() = delete;
+    Robot() = default;
     explicit Robot(const YAML::Node& config);
     ~Robot() = default;
 
