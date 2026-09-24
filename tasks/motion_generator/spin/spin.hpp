@@ -1,6 +1,7 @@
 #ifndef _SPIN_BASE_HPP_
 #define _SPIN_BASE_HPP_
 
+#include <chrono>
 #include <vector>
 
 #include "tools/sine_fuction/sine_fuction.hpp"
@@ -13,6 +14,7 @@ struct SpinState
 {
     double speed{0};
     double yaw{0};
+    double acceleration{0};
 };
 
 
@@ -23,9 +25,9 @@ public:
     SpinGenerator() = default;
     ~SpinGenerator() = default;
 
-    double get_states(const std::chrono::steady_clock::time_point & t) const;
+    SpinState get_states(const std::chrono::steady_clock::time_point& time) const;
 
-protected:
+private:
     int number_of_sine_functions_; // 正弦函数的数量
     std::vector<tools::SineFunction> sine_functions_;
 
@@ -35,8 +37,10 @@ protected:
     std::vector<double> phi_lists_;
     std::vector<double> x_lists_;
 
+    std::chrono::steady_clock::time_point start_time_;
+
 private:
-    SpinState evaluate() const;
+    SpinState evaluate(double elapsed_seconds) const;
 };
 
 } // namespace motion_generator

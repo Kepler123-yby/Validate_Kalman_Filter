@@ -1,20 +1,19 @@
 #ifndef _SINE_FUNCTION_HPP_
 #define _SINE_FUNCTION_HPP_
 
-#include <chrono>
 #include <cmath>
 
 namespace tools
 {
 
-// y(t) = A * sin(f * t + phi) + x
+// w(t) = A * sin(f * t + phi) + x
 // f is angular frequency in rad/s and t is elapsed time in seconds.
 struct SineFunction
 {
-    double A;   // amplitude
+    double A;   // angular velocity amplitude, rad/s
     double f;   // angular frequency, rad/s
     double phi; // initial phase, rad
-    double x;   // DC offset
+    double x;   // angular velocity offset, rad/s
 
     SineFunction(double amplitude, double frequency, double phase, double offset)
         : A(amplitude), f(frequency), phi(phase), x(offset) {}
@@ -24,31 +23,28 @@ struct SineFunction
         return A * std::sin(f * elapsed_seconds + phi) + x;
     }
 
-    double evaluate(const std::chrono::steady_clock::time_point& time) const
-    {
-        const double t = std::chrono::duration<double>(
-            time.time_since_epoch()).count();
-        return evaluate(t);
-    }
-
     double derivative(double elapsed_seconds) const
     {
         return A * f * std::cos(f * elapsed_seconds + phi);
     }
 
-    double derivative(const std::chrono::steady_clock::time_point& time) const
+    double second_derivative(double elapsed_seconds) const
     {
-        const double t = std::chrono::duration<double>(
-            time.time_since_epoch()).count();
-        return derivative(t);
+        return -A * f * f * std::sin(f * elapsed_seconds + phi);
     }
 
-    // Kept for compatibility with the existing spin generator. This method
-    // historically returned the derivative, despite being named integral.
-    double integral(const std::chrono::steady_clock::time_point& time) const
+    // Integral of angular velocity from 0 to elapsed_seconds.
+    double integral(double elapsed_seconds) const
     {
-        return derivative(time);
+        if (std::abs(f) < 1e-12)
+        {
+            return (A * std::sin(phi) + x) * elapsed_seconds;
+        }
+        return A / f * (std::cos(phi)
+            - std::cos(f * elapsed_seconds + phi))
+            + x * elapsed_seconds;
     }
+
 };
 
 } // namespace tools
