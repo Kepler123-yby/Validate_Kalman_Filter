@@ -1,5 +1,9 @@
 # 运动相关设置
 
+# Generator
+generator: 
+  update_rate: 10 #ms
+
 # Robot
 robot:
   armor_nums: 4
