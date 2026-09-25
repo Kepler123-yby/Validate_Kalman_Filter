@@ -11,6 +11,11 @@ SpinGenerator::SpinGenerator(const YAML::Node& config)
     number_of_sine_functions_ = config["number_of_sine_functions"]
         ? config["number_of_sine_functions"].as<int>()
         : 1;
+    if (number_of_sine_functions_ <= 0)
+    {
+        throw std::invalid_argument(
+            "number_of_sine_functions must be positive");
+    }
 
     auto read_list = [this, &config](const char* name)
     {
@@ -33,6 +38,18 @@ SpinGenerator::SpinGenerator(const YAML::Node& config)
     phi_lists_ = read_list("phi_lists");
     x_lists_ = read_list("x_lists");
 
+    auto physical_dimensions = config["physical_dimensions"]
+        ? config["physical_dimensions"].as<std::vector<double>>()
+        : std::vector<double>{27, 25, 5};
+    if (physical_dimensions.size() != 3)
+    {
+        throw std::invalid_argument(
+            "physical_dimensions must contain three values");
+    }
+    forword_radius_ = physical_dimensions.at(0);
+    beside_radius_ = physical_dimensions.at(1);
+    height_diff_ = physical_dimensions.at(2);
+
     sine_functions_.reserve(number_of_sine_functions_);
     for (int i = 0; i < number_of_sine_functions_; ++i)
     {
@@ -54,6 +71,10 @@ SpinState SpinGenerator::get_states(
 SpinState SpinGenerator::evaluate(double elapsed_seconds) const
 {
     SpinState state;
+    state.forword_radius = forword_radius_;
+    state.beside_radius = beside_radius_;
+    state.height_diff = height_diff_;
+
     for (const auto& sine_function : sine_functions_)
     {
         state.yaw += sine_function.integral(elapsed_seconds);

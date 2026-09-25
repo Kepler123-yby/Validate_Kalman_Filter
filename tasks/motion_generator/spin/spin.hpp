@@ -15,6 +15,9 @@ struct SpinState
     double speed{0};
     double yaw{0};
     double acceleration{0};
+    double forword_radius{0};
+    double beside_radius{0};
+    double height_diff{0};
 };
 
 
@@ -36,6 +39,11 @@ private:
     std::vector<double> f_lists_;
     std::vector<double> phi_lists_;
     std::vector<double> x_lists_;
+
+    // 物理尺寸
+    double forword_radius_;
+    double beside_radius_;
+    double height_diff_;
 
     std::chrono::steady_clock::time_point start_time_;
 
