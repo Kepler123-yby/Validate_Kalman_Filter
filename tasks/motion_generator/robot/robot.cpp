@@ -36,14 +36,18 @@ Robot::Robot(const YAML::Node& config)
 
     detect_min_threshold_ = robot_config["detect_min_threshold"]
         ? robot_config["detect_min_threshold"].as<double>()
-        : -60.0;
+        : -M_PI / 3.0;
     detect_max_threshold_ = robot_config["detect_max_threshold"]
         ? robot_config["detect_max_threshold"].as<double>()
-        : 60.0;
-    if (detect_min_threshold_ > detect_max_threshold_)
+        : M_PI / 3.0;
+    if (!std::isfinite(detect_min_threshold_)
+        || !std::isfinite(detect_max_threshold_)
+        || detect_min_threshold_ < -M_PI
+        || detect_max_threshold_ > M_PI
+        || detect_min_threshold_ > detect_max_threshold_)
     {
         throw std::invalid_argument(
-            "robot.detect_min_threshold must not exceed detect_max_threshold");
+            "robot detection thresholds must be radians within [-pi, pi] and ordered");
     }
 
     // state转置矩阵
@@ -96,8 +100,11 @@ void Robot::update_state(const Eigen::VectorXd& raw_state)
         throw std::invalid_argument("raw_state size is invalid");
     }
 
-    raw2states(raw_state);
-    raw2observation(raw_state);
+    Eigen::VectorXd normalized_state = raw_state;
+    normalized_state[9] = tools::limit_euler(normalized_state[9]);
+
+    raw2states(normalized_state);
+    raw2observation(normalized_state);
     update_locked_id();
 }
 
@@ -118,7 +125,8 @@ void Robot::raw2observation(const Eigen::VectorXd& raw_state)
 
     for (auto& armor : armors_)
     {
-        double angle = yaw + armor.id_ * 2.0 * M_PI / armor_nums_;
+        double angle = tools::limit_euler(
+            yaw + armor.id_ * 2.0 * M_PI / armor_nums_);
         double cos_angle = std::cos(angle);
         double sin_angle = std::sin(angle);
 
@@ -155,8 +163,7 @@ void Robot::update_locked_id()
         double observation_yaw = armor.observation[0];
         double armor_yaw = armor.observation[3];
 
-        double detect_angle = tools::angle_to_euler(
-            std::remainder(observation_yaw - armor_yaw, 2.0 * M_PI));
+        double detect_angle = tools::delta_euler(armor_yaw, observation_yaw);
 
         if (detect_angle < detect_min_threshold_
             || detect_angle > detect_max_threshold_)

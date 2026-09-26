@@ -25,5 +25,4 @@ void PlotJuggler::plot(const nlohmann::json & json)
     socket_, data.c_str(), data.length(), 0, reinterpret_cast<sockaddr *>(&destination_),
     sizeof(destination_));
 }
-
 } // namespace tools

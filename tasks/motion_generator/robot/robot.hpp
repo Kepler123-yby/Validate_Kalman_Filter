@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <yaml-cpp/yaml.h>
+#include <cmath>
 #include <vector>
 
 #include "tools/math_tools/math_tools.hpp"
@@ -46,8 +47,8 @@ private:
     int locked_id_{0};
     int switch_times_{0};
 
-    double detect_min_threshold_{-60.0};
-    double detect_max_threshold_{60.0};
+    double detect_min_threshold_{-M_PI / 3.0};
+    double detect_max_threshold_{M_PI / 3.0};
 
     Eigen::MatrixXd raw2states_mat_;
 

@@ -7,7 +7,8 @@ namespace tools
 
 double limit_euler(const double angle)
 {
-    return std::fmod(angle + M_PI, 2 * M_PI) - M_PI;
+    const double wrapped = std::remainder(angle, 2.0 * M_PI);
+    return wrapped >= M_PI ? wrapped - 2.0 * M_PI : wrapped;
 }
 
 double delta_time(const std::chrono::steady_clock::time_point& start_time, const std::chrono::steady_clock::time_point& end_time)

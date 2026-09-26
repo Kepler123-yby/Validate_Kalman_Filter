@@ -1,5 +1,7 @@
 #include "spin.hpp"
 
+#include "tools/math_tools/math_tools.hpp"
+
 #include <string>
 #include <stdexcept>
 
@@ -81,6 +83,7 @@ SpinState SpinGenerator::evaluate(double elapsed_seconds) const
         state.speed += sine_function.evaluate(elapsed_seconds);
         state.acceleration += sine_function.derivative(elapsed_seconds);
     }
+    state.yaw = tools::limit_euler(state.yaw);
     return state;
 }
 

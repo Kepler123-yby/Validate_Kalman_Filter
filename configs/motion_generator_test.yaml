@@ -8,8 +8,8 @@ generator:
 robot:
   armor_nums: 4
   init_states: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 25, 5]
-  detect_min_threshold: -60.0
-  detect_max_threshold: 60.0
+  detect_min_threshold: -1.0471975511965976 # radians (-60 degrees)
+  detect_max_threshold: 1.0471975511965976  # radians (60 degrees)
   raw2state_mat: 
     size: [11, 15]
     data: [
@@ -33,10 +33,10 @@ spin:
   number_of_sine_functions: 1
 
   # 下列内容长度需要和number_of_sine_functions对应
-  A_lists: []
-  f_lists: []
-  phi_lists: []
-  x_lists: []
+  A_lists: [0]
+  f_lists: [0]
+  phi_lists: [0]
+  x_lists: [5]
 
 # 平移
 translation:
