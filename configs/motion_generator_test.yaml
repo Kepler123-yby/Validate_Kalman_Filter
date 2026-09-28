@@ -40,7 +40,7 @@ spin:
 
 # 平移
 translation:
-  translation_mode: 0
+  translation_mode: 1
   initial:
     position: [0.0, 0.0, 0.0]
     velocity: [0.0, 0.0, 0.0]

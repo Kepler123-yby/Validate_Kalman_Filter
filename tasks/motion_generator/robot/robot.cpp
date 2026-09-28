@@ -3,7 +3,6 @@
 #include <array>
 #include <cmath>
 #include <limits>
-#include <stdexcept>
 #include <vector>
 
 namespace motion_generator
@@ -20,13 +19,7 @@ Robot::Robot(const YAML::Node& config)
 {
     auto robot_config = config["robot"];
 
-    armor_nums_ = robot_config["armor_nums"]
-        ? robot_config["armor_nums"].as<int>()
-        : 4;
-    if (armor_nums_ <= 0)
-    {
-        throw std::invalid_argument("robot.armor_nums must be positive");
-    }
+    armor_nums_ = robot_config["armor_nums"].as<int>(4);
 
     armors_.reserve(armor_nums_);
     for (int i = 0; i < armor_nums_; ++i)
@@ -34,72 +27,35 @@ Robot::Robot(const YAML::Node& config)
         armors_.emplace_back(i);
     }
 
-    detect_min_threshold_ = robot_config["detect_min_threshold"]
-        ? robot_config["detect_min_threshold"].as<double>()
-        : -M_PI / 3.0;
-    detect_max_threshold_ = robot_config["detect_max_threshold"]
-        ? robot_config["detect_max_threshold"].as<double>()
-        : M_PI / 3.0;
-    if (!std::isfinite(detect_min_threshold_)
-        || !std::isfinite(detect_max_threshold_)
-        || detect_min_threshold_ < -M_PI
-        || detect_max_threshold_ > M_PI
-        || detect_min_threshold_ > detect_max_threshold_)
-    {
-        throw std::invalid_argument(
-            "robot detection thresholds must be radians within [-pi, pi] and ordered");
-    }
+    detect_min_threshold_ = robot_config["detect_min_threshold"].as<double>(-M_PI / 3.0);
+    detect_max_threshold_ = robot_config["detect_max_threshold"].as<double>(M_PI / 3.0);
 
-    // state转置矩阵
+    // 原始状态到滤波状态的映射，维数与数据长度由配置保证。
     auto state_config = robot_config["raw2state_mat"];
-    std::array<int, 2> state_mat_size = state_config["size"]
-        ? state_config["size"].as<std::array<int, 2>>()
-        : std::array<int, 2>{11, 15};
+    auto state_mat_size = state_config["size"].as<std::array<int, 2>>(
+        std::array<int, 2>{11, 15});
     auto raw2states_mat_data = state_config["data"].as<std::vector<double>>();
-
-    if (state_mat_size[0] <= 0 || state_mat_size[1] <= 0
-        || raw2states_mat_data.size()
-            != static_cast<std::size_t>(state_mat_size[0] * state_mat_size[1]))
-    {
-        throw std::invalid_argument("robot.raw2state_mat size does not match data");
-    }
-
     raw2states_mat_ = Eigen::Map<MatRowMajor>(
         raw2states_mat_data.data(), state_mat_size[0], state_mat_size[1]);
-    if (raw2states_mat_.cols() != 15)
-    {
-        throw std::invalid_argument("robot raw state must contain 15 values");
-    }
 
-    auto init_states_data = robot_config["init_states"]
-        ? robot_config["init_states"].as<std::vector<double>>()
-        : std::vector<double>(raw2states_mat_.cols(), 0.0);
-    if (init_states_data.size() != static_cast<std::size_t>(raw2states_mat_.cols()))
-    {
-        throw std::invalid_argument("robot.init_states size is invalid");
-    }
-
+    auto init_states_data = robot_config["init_states"].as<std::vector<double>>(
+        std::vector<double>(raw2states_mat_.cols(), 0.0));
     update_state(Eigen::Map<const Eigen::VectorXd>(
         init_states_data.data(), init_states_data.size()));
 }
 
 const Eigen::Vector4d& Robot::get_observation() const
 {
-    return armors_.at(locked_id_).observation;
+    return armors_[locked_id_].observation;
 }
 
 Eigen::Vector4d& Robot::get_observation()
 {
-    return armors_.at(locked_id_).observation;
+    return armors_[locked_id_].observation;
 }
 
 void Robot::update_state(const Eigen::VectorXd& raw_state)
 {
-    if (raw_state.size() != raw2states_mat_.cols())
-    {
-        throw std::invalid_argument("raw_state size is invalid");
-    }
-
     Eigen::VectorXd normalized_state = raw_state;
     normalized_state[9] = tools::limit_euler(normalized_state[9]);
 
@@ -156,7 +112,6 @@ void Robot::update_locked_id()
 {
     int new_locked_id = locked_id_;
     double min_detect_angle = std::numeric_limits<double>::max();
-    bool armor_found = false;
 
     for (const auto& armor : armors_)
     {
@@ -175,11 +130,10 @@ void Robot::update_locked_id()
         {
             min_detect_angle = std::abs(detect_angle);
             new_locked_id = armor.id_;
-            armor_found = true;
         }
     }
 
-    if (armor_found && new_locked_id != locked_id_)
+    if (new_locked_id != locked_id_)
     {
         locked_id_ = new_locked_id;
         ++switch_times_;

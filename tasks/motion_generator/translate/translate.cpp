@@ -1,6 +1,7 @@
 #include "translate.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace motion_generator
@@ -11,66 +12,48 @@ namespace
 
 Eigen::Vector3d read_vector(const YAML::Node& node, const Eigen::Vector3d& value)
 {
-    if (!node || !node.IsSequence() || node.size() != 3)
-    {
-        return value;
-    }
-    return {node[0].as<double>(), node[1].as<double>(), node[2].as<double>()};
+    const auto data = node.as<std::array<double, 3>>(
+        std::array<double, 3>{value[0], value[1], value[2]});
+    return {data[0], data[1], data[2]};
 }
 
 } // namespace
 
 TranslationGenerator::TranslationGenerator(const YAML::Node& config)
 {
-    const YAML::Node line = config["line"];
-    const YAML::Node random = config["random"];
-    const YAML::Node initial = config["initial"];
+    // 可选配置段缺省时使用空映射，各参数直接通过 as(default) 读取。
+    auto read_section = [&config](const char* name)
+    {
+        return config[name] ? config[name] : YAML::Node(YAML::NodeType::Map);
+    };
+    const auto line = read_section("line");
+    const auto random = read_section("random");
+    const auto initial = read_section("initial");
 
-    const int mode = config["translation_mode"]
-        ? config["translation_mode"].as<int>()
-        : config["mode"].as<int>(0);
+    const int mode = config["translation_mode"].as<int>(config["mode"].as<int>(0));
     translation_mode_ = static_cast<TranslationMode>(mode);
 
-    initial_position_ = read_vector(
-        initial && initial.IsMap() ? initial["position"] : YAML::Node(),
-        Eigen::Vector3d::Zero());
-    initial_speed_ = read_vector(
-        initial && initial.IsMap() ? initial["velocity"] : YAML::Node(),
-        Eigen::Vector3d::Zero());
+    initial_position_ = read_vector(initial["position"], Eigen::Vector3d::Zero());
+    initial_speed_ = read_vector(initial["velocity"], Eigen::Vector3d::Zero());
 
-    line_start_ = read_vector(
-        line && line.IsMap() ? line["start"] : YAML::Node(), initial_position_);
+    line_start_ = read_vector(line["start"], initial_position_);
     line_end_ = read_vector(
-        line && line.IsMap() ? line["end"] : YAML::Node(),
-        initial_position_ + Eigen::Vector3d::UnitX());
-    line_time_ = line && line.IsMap()
-        ? line["one_way_time"].as<double>(2.0)
-        : 2.0;
+        line["end"], initial_position_ + Eigen::Vector3d::UnitX());
+    line_time_ = line["one_way_time"].as<double>(2.0);
 
     speed_min_ = read_vector(
-        random && random.IsMap() ? random["velocity_min"] : YAML::Node(),
-        Eigen::Vector3d::Constant(-1.0));
+        random["velocity_min"], Eigen::Vector3d::Constant(-1.0));
     speed_max_ = read_vector(
-        random && random.IsMap() ? random["velocity_max"] : YAML::Node(),
-        Eigen::Vector3d::Constant(1.0));
-    max_acceleration_ = random && random.IsMap()
-        ? random["max_acceleration"].as<double>(2.0) : 2.0;
-    max_jerk_ = random && random.IsMap()
-        ? random["max_jerk"].as<double>(10.0) : 10.0;
-    response_time_ = random && random.IsMap()
-        ? random["response_time"].as<double>(0.5) : 0.5;
-    hold_time_min_ = random && random.IsMap()
-        ? random["hold_time_min"].as<double>(0.5) : 0.5;
-    hold_time_max_ = random && random.IsMap()
-        ? random["hold_time_max"].as<double>(2.0) : 2.0;
-    stop_probability_ = random && random.IsMap()
-        ? random["stop_probability"].as<double>(0.0) : 0.0;
-    reverse_probability_ = random && random.IsMap()
-        ? random["reverse_probability"].as<double>(0.0) : 0.0;
-    integration_step_ = random && random.IsMap()
-        ? random["integration_step"].as<double>(0.01) : 0.01;
-    random_seed_ = random && random.IsMap()
-        ? random["seed"].as<unsigned int>(42) : 42;
+        random["velocity_max"], Eigen::Vector3d::Constant(1.0));
+    max_acceleration_ = random["max_acceleration"].as<double>(2.0);
+    max_jerk_ = random["max_jerk"].as<double>(10.0);
+    response_time_ = random["response_time"].as<double>(0.5);
+    hold_time_min_ = random["hold_time_min"].as<double>(0.5);
+    hold_time_max_ = random["hold_time_max"].as<double>(2.0);
+    stop_probability_ = random["stop_probability"].as<double>(0.0);
+    reverse_probability_ = random["reverse_probability"].as<double>(0.0);
+    integration_step_ = random["integration_step"].as<double>(0.01);
+    random_seed_ = random["seed"].as<unsigned int>(42);
 
     reset();
 }

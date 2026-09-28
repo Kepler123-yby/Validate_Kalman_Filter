@@ -1,7 +1,5 @@
 #include "generator.hpp"
 
-#include <stdexcept>
-
 namespace motion_generator
 {
 
@@ -15,13 +13,9 @@ Generator::Generator(const YAML::Node& config)
     spin_ = std::make_unique<SpinGenerator>(spin_config);
     target_ = std::make_unique<Robot>(config);
 
-    update_rate_ = generator_config && generator_config["update_rate"]
-        ? generator_config["update_rate"].as<int>()
+    update_rate_ = generator_config
+        ? generator_config["update_rate"].as<int>(10)
         : 10;
-    if (update_rate_ <= 0)
-    {
-        throw std::invalid_argument("generator.update_rate must be positive");
-    }
 
     motion_thread_ = std::thread(&Generator::motion_loop, this);
 }
@@ -29,10 +23,7 @@ Generator::Generator(const YAML::Node& config)
 Generator::~Generator()
 {
     stop_motion_ = true;
-    if (motion_thread_.joinable())
-    {
-        motion_thread_.join();
-    }
+    motion_thread_.join();
 }
 
 void Generator::motion_loop()
