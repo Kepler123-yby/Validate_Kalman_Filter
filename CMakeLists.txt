@@ -11,13 +11,9 @@ find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(tools)
 add_subdirectory(tasks/motion_generator)
+add_subdirectory(tasks/kalman_flitter_fitter)
 
 # test
 
 add_executable(generator_test tests/generator_test.cpp)
 target_link_libraries(generator_test ${OpenCV_LIBS} nlohmann_json::nlohmann_json yaml-cpp tools motion_generator)
-
-enable_testing()
-add_executable(angle_test tests/angle_test.cpp)
-target_link_libraries(angle_test PRIVATE motion_generator)
-add_test(NAME angle_test COMMAND angle_test)

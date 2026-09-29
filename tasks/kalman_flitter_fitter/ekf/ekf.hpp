@@ -20,6 +20,7 @@ struct ConsistencyStatistics
     double normalized_mean{std::numeric_limits<double>::quiet_NaN()}; // 各样本除以自身维数后的均值
 };
 
+// 初始 P 以对角方差向量传入，Q、R 使用完整协方差矩阵。
 // 调用方保证状态已初始化、维数匹配、回调有效，且评估使用的 P、S 正定。
 class EKF
 {
@@ -30,21 +31,22 @@ public:
 
     EKF() = default;
     EKF(
-        const Eigen::VectorXd& x, const Eigen::MatrixXd& P,
+        const Eigen::VectorXd& x, const Eigen::VectorXd& P,
         VectorOperation x_add = default_add,
         VectorOperation x_sub = default_subtract);
 
     const Eigen::VectorXd get_x() const { return x_; }
     const Eigen::MatrixXd get_P() const { return P_; }
 
-    // 非线性预测由 f 计算状态，F 为雅可比；省略 f 时使用线性模型 F * x。
+    // 非线性预测由 f 计算状态，F 为雅可比；Q 为过程噪声协方差矩阵。
+    // 省略 f 时使用线性模型 F * x。
     void predict(
         const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q,
         const StateFunction& f);
     void predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q);
 
     // h 计算预测观测，H 为雅可比；z_sub 计算观测残差，角度分量需取最短角差。
-    // NIS 使用更新前的创新和协方差，每次成功更新记录一个样本。
+    // R 为测量噪声协方差矩阵；NIS 使用更新前的创新和协方差。
     void update(
         const Eigen::MatrixXd& H, const Eigen::VectorXd& z,
         const Eigen::MatrixXd& R, const StateFunction& h,
@@ -70,7 +72,7 @@ public:
     void reset_evaluation();
 
 private:
-    // 滤波状态及其协方差
+    // 滤波状态及完整协方差；初值为对角阵，递推后通常不再是对角阵。
     Eigen::VectorXd x_;
     Eigen::MatrixXd P_;
 

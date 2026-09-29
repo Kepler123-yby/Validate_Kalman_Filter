@@ -64,3 +64,9 @@ translation:
     reverse_probability: 0.20
     integration_step: 0.01
     seed: 42
+
+# kf相关参数
+kalman_flitter:
+  # ekf相关参数
+  ekf:
+    P: []

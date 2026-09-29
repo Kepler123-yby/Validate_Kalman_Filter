@@ -6,9 +6,9 @@ namespace kalman_flitter
 {
 
 EKF::EKF(
-    const Eigen::VectorXd& x, const Eigen::MatrixXd& P,
+    const Eigen::VectorXd& x, const Eigen::VectorXd& P,
     VectorOperation x_add, VectorOperation x_sub)
-    : x_(x), P_(symmetrize(P)),
+    : x_(x), P_(P.asDiagonal()),
       x_add_(std::move(x_add)), x_sub_(std::move(x_sub))
 {
 }

@@ -1,6 +1,8 @@
 #ifndef _UKF_HPP_
 #define _UKF_HPP_
 
+#include <Eigen/Dense>
+
 namespace kalman_flitter
 {
 
