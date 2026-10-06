@@ -7,7 +7,7 @@ generator:
 # Robot
 robot:
   armor_nums: 4
-  init_states: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 25, 5]
+  init_states: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.27, 0.25, 0.5]
   detect_min_threshold: -1.0471975511965976 # radians (-60 degrees)
   detect_max_threshold: 1.0471975511965976  # radians (60 degrees)
   raw2state_mat: 
@@ -28,14 +28,14 @@ robot:
 
 # 自旋
 spin:
-  physical_dimensions: [27, 25, 5] 
+  physical_dimensions: [0.27, 0.25, 0.5] 
 
   number_of_sine_functions: 1
 
   # 下列内容长度需要和number_of_sine_functions对应
-  A_lists: [0]
-  f_lists: [0]
-  phi_lists: [0]
+  A_lists: [2]
+  f_lists: [6.283185307179586]
+  phi_lists: [1.5707963267948966]
   x_lists: [5]
 
 # 平移
@@ -67,6 +67,17 @@ translation:
 
 # kf相关参数
 kalman_flitter:
+  physical_dimensions: [0.27, 0.25, 0.5]
   # ekf相关参数
   ekf:
-    P: []
+    P: [1, 20, 1, 20, 1, 20, 0.4, 50, 1e-6, 1e-6, 1e-6]
+
+    Q:
+      a: [5, 5, 5]
+      wa: 20
+      physical_dimensions: [0, 0, 0]
+
+    R: [4e-3, 4e-3, 1e-2, 9e-2]
+    measurement_R: [4e-3, 4e-3, 1e-2, 9e-2]
+
+  predict_time: 0.15

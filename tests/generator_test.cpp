@@ -34,21 +34,21 @@ int main(int argc, char* argv[])
         auto motion_states = generator_.generate();
 
         {
-            data["center_x"] = motion_states.first[0];
-            data["vx"] = motion_states.first[1];
-            data["center_y"] = motion_states.first[2];
-            data["vy"] = motion_states.first[3];     
-            data["center_z"] = motion_states.first[4];
-            data["vz"] = motion_states.first[5];
-            data["a"] = motion_states.first[6];
-            data["w"] = motion_states.first[7];
-            data["forward_radius"] = motion_states.first[8];
-            data["beside_radius"] = motion_states.first[9];
-            data["beside_height_diff"]  = motion_states.first[10];
-            data["armor_yaw"] = motion_states.second[0];      
-            data["armor_pitch"] = motion_states.second[1];
-            data["armor_distance"] = motion_states.second[2];
-            data["armor_angle"] = motion_states.second[3];
+            data["center_x"] = motion_states.state[0];
+            data["vx"] = motion_states.state[1];
+            data["center_y"] = motion_states.state[2];
+            data["vy"] = motion_states.state[3];
+            data["center_z"] = motion_states.state[4];
+            data["vz"] = motion_states.state[5];
+            data["a"] = motion_states.state[6];
+            data["w"] = motion_states.state[7];
+            data["forward_radius"] = motion_states.state[8];
+            data["beside_radius"] = motion_states.state[9];
+            data["beside_height_diff"]  = motion_states.state[10];
+            data["armor_yaw"] = motion_states.observation[0];
+            data["armor_pitch"] = motion_states.observation[1];
+            data["armor_distance"] = motion_states.observation[2];
+            data["armor_angle"] = motion_states.observation[3];
         }
 
         plotter.plot(data);

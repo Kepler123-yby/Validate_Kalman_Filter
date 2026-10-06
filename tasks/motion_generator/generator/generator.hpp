@@ -8,6 +8,8 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <condition_variable>
+#include <cstdint>
 
 #include "spin/spin.hpp"
 #include "translate/translate.hpp"
@@ -16,7 +18,14 @@
 namespace motion_generator
 {
 
-using GeneratorState = std::pair<Eigen::VectorXd, Eigen::Vector4d>;
+struct GeneratorState
+{
+    Eigen::VectorXd state;
+    Eigen::Vector4d observation;
+    int armor_id;
+    uint64_t sequence;
+    std::chrono::steady_clock::time_point timestamp;
+};
 
 class Generator
 {
@@ -25,11 +34,13 @@ public:
     ~Generator();
 
     GeneratorState generate();
+    GeneratorState wait_for_next(uint64_t sequence);
 
 private:
     std::unique_ptr<TranslationGenerator> translation_;
     std::unique_ptr<SpinGenerator> spin_;
     std::mutex state_mutex_;
+    std::condition_variable state_condition_;
     std::thread motion_thread_;
 
     std::unique_ptr<Robot> target_;
@@ -37,6 +48,8 @@ private:
 
     TranslationState translation_state_;
     SpinState spin_state_;
+    uint64_t sequence_{0};
+    std::chrono::steady_clock::time_point timestamp_;
 
     std::atomic<bool> stop_motion_{false};
 
@@ -46,6 +59,7 @@ private:
     Eigen::VectorXd make_raw_states(
         const TranslationState& translation_state,
         const SpinState& spin_state) const;
+    GeneratorState copy_state() const;
 };
 
 } // namespace motion_generator

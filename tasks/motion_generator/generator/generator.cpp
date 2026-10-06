@@ -23,6 +23,7 @@ Generator::Generator(const YAML::Node& config)
 Generator::~Generator()
 {
     stop_motion_ = true;
+    state_condition_.notify_all();
     motion_thread_.join();
 }
 
@@ -40,7 +41,10 @@ void Generator::motion_loop()
             translation_state_ = translation_state;
             spin_state_ = spin_state;
             target_->update_state(raw_state);
+            timestamp_ = time;
+            ++sequence_;
         }
+        state_condition_.notify_all();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(update_rate_));
     }
@@ -73,9 +77,24 @@ Eigen::VectorXd Generator::make_raw_states(
 GeneratorState Generator::generate()
 {
     std::lock_guard<std::mutex> lock(state_mutex_);
+    return copy_state();
+}
+
+GeneratorState Generator::wait_for_next(const uint64_t sequence)
+{
+    std::unique_lock<std::mutex> lock(state_mutex_);
+    state_condition_.wait(lock, [this, sequence]
+    {
+        return sequence_ > sequence;
+    });
+    return copy_state();
+}
+
+GeneratorState Generator::copy_state() const
+{
     return GeneratorState{
-        target_->get_states(),
-        target_->get_observation()};
+        target_->get_states(), target_->get_observation(), target_->get_locked_id(),
+        sequence_, timestamp_};
 }
 
 } // namespace motion_generator

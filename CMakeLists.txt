@@ -16,4 +16,21 @@ add_subdirectory(tasks/kalman_flitter_fitter)
 # test
 
 add_executable(generator_test tests/generator_test.cpp)
-target_link_libraries(generator_test ${OpenCV_LIBS} nlohmann_json::nlohmann_json yaml-cpp tools motion_generator)
+target_link_libraries(generator_test
+    PRIVATE
+        ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
+        yaml-cpp tools
+        motion_generator)
+
+add_executable(ekf_test tests/ekf_test.cpp)
+target_include_directories(ekf_test PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(ekf_test
+    PRIVATE
+        ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
+        yaml-cpp
+        tools
+        motion_generator
+        kalman_flitter_fitter
+)
