@@ -33,7 +33,7 @@ spin:
   number_of_sine_functions: 1
 
   # 下列内容长度需要和number_of_sine_functions对应
-  A_lists: [2]
+  A_lists: [0]
   f_lists: [6.283185307179586]
   phi_lists: [1.5707963267948966]
   x_lists: [5]
@@ -66,14 +66,14 @@ translation:
     seed: 42
 
 # kf相关参数
-kalman_flitter:
+kalman_filter:
   physical_dimensions: [0.27, 0.25, 0.5]
   # ekf相关参数
   ekf:
     P: [1, 20, 1, 20, 1, 20, 0.4, 50, 1e-6, 1e-6, 1e-6]
 
     Q:
-      a: [5, 5, 5]
+      a: [10, 10, 10]
       wa: 20
       physical_dimensions: [0, 0, 0]
 

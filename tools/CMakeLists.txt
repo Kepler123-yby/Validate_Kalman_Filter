@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.8)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
+# 无状态工具集合：数学函数、正弦运动模型、PlotJuggler 客户端、退出标志。
 add_library(tools STATIC
     math_tools/math_tools.cpp
-    sine_fuction/sine_fuction.cpp
+    sine_function/sine_function.cpp
     plotjuggler/plotjuggler.cpp
     exiter/exiter.cpp
 )

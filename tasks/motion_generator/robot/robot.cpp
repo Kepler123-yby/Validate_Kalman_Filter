@@ -1,3 +1,8 @@
+/**
+ * @file robot.cpp
+ * @brief @ref motion_generator::Robot 与 @ref motion_generator::Armor 的实现。
+ */
+
 #include "robot.hpp"
 
 #include <array>
@@ -8,103 +13,100 @@
 namespace motion_generator
 {
 
-using MatRowMajor = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+namespace
+{
 
-Armor::Armor(const int id)
-    : id_(id), observation(Eigen::Vector4d::Zero())
+/// 按行主序映射 YAML 中的矩阵数据，避免列主序导致的排列错误。
+using RowMajorMatrix =
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+} // namespace
+
+Armor::Armor(const int armor_id)
+    : id(armor_id), observation(Eigen::Vector4d::Zero())
 {
 }
 
 Robot::Robot(const YAML::Node& config)
 {
-    auto robot_config = config["robot"];
+    const auto robot_config = config["robot"];
 
-    armor_nums_ = robot_config["armor_nums"].as<int>(4);
-
-    armors_.reserve(armor_nums_);
-    for (int i = 0; i < armor_nums_; ++i)
+    const int armor_count = robot_config["armor_nums"].as<int>(4);
+    armors_.reserve(armor_count);
+    for (int i = 0; i < armor_count; ++i)
     {
         armors_.emplace_back(i);
     }
 
-    detect_min_threshold_ = robot_config["detect_min_threshold"].as<double>(-M_PI / 3.0);
-    detect_max_threshold_ = robot_config["detect_max_threshold"].as<double>(M_PI / 3.0);
+    detect_min_threshold_ =
+        robot_config["detect_min_threshold"].as<double>(-M_PI / 3.0);
+    detect_max_threshold_ =
+        robot_config["detect_max_threshold"].as<double>(M_PI / 3.0);
 
     // 原始状态到滤波状态的映射，维数与数据长度由配置保证。
-    auto state_config = robot_config["raw2state_mat"];
-    auto state_mat_size = state_config["size"].as<std::array<int, 2>>(
-        std::array<int, 2>{11, 15});
-    auto raw2states_mat_data = state_config["data"].as<std::vector<double>>();
-    raw2states_mat_ = Eigen::Map<MatRowMajor>(
-        raw2states_mat_data.data(), state_mat_size[0], state_mat_size[1]);
+    const auto state_config = robot_config["raw2state_mat"];
+    const auto state_mat_size = state_config["size"].as<std::array<int, 2>>(
+        std::array<int, 2>{tools::robot_state::kSize, RawStateIndex::kRawSize});
+    const auto matrix_data = state_config["data"].as<std::vector<double>>();
+    raw_to_state_ = Eigen::Map<const RowMajorMatrix>(
+        matrix_data.data(), state_mat_size[0], state_mat_size[1]);
 
-    auto init_states_data = robot_config["init_states"].as<std::vector<double>>(
-        std::vector<double>(raw2states_mat_.cols(), 0.0));
+    const auto initial_states = robot_config["init_states"].as<std::vector<double>>(
+        std::vector<double>(raw_to_state_.cols(), 0.0));
     update_state(Eigen::Map<const Eigen::VectorXd>(
-        init_states_data.data(), init_states_data.size()));
-}
-
-const Eigen::Vector4d& Robot::get_observation() const
-{
-    return armors_[locked_id_].observation;
-}
-
-Eigen::Vector4d& Robot::get_observation()
-{
-    return armors_[locked_id_].observation;
+        initial_states.data(), initial_states.size()));
 }
 
 void Robot::update_state(const Eigen::VectorXd& raw_state)
 {
     Eigen::VectorXd normalized_state = raw_state;
-    normalized_state[9] = tools::limit_euler(normalized_state[9]);
+    normalized_state[RawStateIndex::kRawYaw] =
+        tools::normalize_angle(normalized_state[RawStateIndex::kRawYaw]);
 
-    raw2states(normalized_state);
-    raw2observation(normalized_state);
+    compute_states(normalized_state);
+    compute_observations(normalized_state);
     update_locked_id();
 }
 
-void Robot::raw2states(const Eigen::VectorXd& raw_state)
+void Robot::compute_states(const Eigen::VectorXd& raw_state)
 {
-    states_ = raw2states_mat_ * raw_state;
+    states_ = raw_to_state_ * raw_state;
 }
 
-void Robot::raw2observation(const Eigen::VectorXd& raw_state)
+void Robot::compute_observations(const Eigen::VectorXd& raw_state)
 {
-    double yaw = raw_state[9];
-    double center_x = raw_state[0];
-    double center_y = raw_state[3];
-    double center_z = raw_state[6];
-    double forward_radius = raw_state[12];
-    double beside_radius = raw_state[13];
-    double beside_height_diff = raw_state[14];
+    const double yaw = raw_state[RawStateIndex::kRawYaw];
+    const double center_x = raw_state[RawStateIndex::kRawCenterX];
+    const double center_y = raw_state[RawStateIndex::kRawCenterY];
+    const double center_z = raw_state[RawStateIndex::kRawCenterZ];
+    const double forward_radius = raw_state[RawStateIndex::kRawForwardRadius];
+    const double beside_radius = raw_state[RawStateIndex::kRawBesideRadius];
+    const double height_difference = raw_state[RawStateIndex::kRawHeightDifference];
+
+    const double armor_angle_step = 2.0 * M_PI / armors_.size();
 
     for (auto& armor : armors_)
     {
-        double angle = tools::limit_euler(
-            yaw + armor.id_ * 2.0 * M_PI / armor_nums_);
-        double cos_angle = std::cos(angle);
-        double sin_angle = std::sin(angle);
+        const double angle =
+            tools::normalize_angle(yaw + armor.id * armor_angle_step);
+        const double cos_angle = std::cos(angle);
+        const double sin_angle = std::sin(angle);
 
-        if (armor.id_ % 2 == 0)
-        {
-            double x = center_x - cos_angle * forward_radius;
-            double y = center_y - sin_angle * forward_radius;
-            Eigen::Vector3d ypd = tools::xyz_to_ypd(
-                Eigen::Vector3d(x, y, center_z));
-            armor.observation = Eigen::Vector4d(
-                ypd[0], ypd[1], ypd[2], angle);
-        }
-        else
-        {
-            double x = center_x - cos_angle * beside_radius;
-            double y = center_y - sin_angle * beside_radius;
-            double z = center_z + beside_height_diff;
-            Eigen::Vector3d ypd = tools::xyz_to_ypd(
-                Eigen::Vector3d(x, y, z));
-            armor.observation = Eigen::Vector4d(
-                ypd[0], ypd[1], ypd[2], angle);
-        }
+        // 正面装甲板使用 forward_radius，且与中心等高；
+        // 侧面装甲板使用 beside_radius，并带有一个高度差。
+        const double radius =
+            tools::robot_state::is_front_armor(armor.id) ? forward_radius
+                                                         : beside_radius;
+        const double z = tools::robot_state::is_front_armor(armor.id)
+            ? center_z
+            : center_z + height_difference;
+
+        const double x = center_x - cos_angle * radius;
+        const double y = center_y - sin_angle * radius;
+
+        const Eigen::Vector3d ypd = tools::cartesian_to_ypd({x, y, z});
+        armor.observation =
+            Eigen::Vector4d(ypd[0], ypd[1], ypd[2], angle);
     }
 }
 
@@ -115,11 +117,14 @@ void Robot::update_locked_id()
 
     for (const auto& armor : armors_)
     {
-        double observation_yaw = armor.observation[0];
-        double armor_yaw = armor.observation[3];
+        const double observation_yaw =
+            armor.observation[tools::robot_state::kBearing];
+        const double armor_yaw =
+            armor.observation[tools::robot_state::kArmorAngle];
 
-        double detect_angle = tools::delta_euler(armor_yaw, observation_yaw);
+        const double detect_angle = tools::angle_difference(armor_yaw, observation_yaw);
 
+        // 超出可见范围（±detect threshold）的装甲板不参与锁定。
         if (detect_angle < detect_min_threshold_
             || detect_angle > detect_max_threshold_)
         {
@@ -129,7 +134,7 @@ void Robot::update_locked_id()
         if (std::abs(detect_angle) < min_detect_angle)
         {
             min_detect_angle = std::abs(detect_angle);
-            new_locked_id = armor.id_;
+            new_locked_id = armor.id;
         }
     }
 

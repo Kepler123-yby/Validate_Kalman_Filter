@@ -1,15 +1,22 @@
+/**
+ * @file ekf.cpp
+ * @brief @ref kalman_filter::EKF 的实现。
+ */
+
 #include "ekf.hpp"
 
 #include <utility>
 
-namespace kalman_flitter
+namespace kalman_filter
 {
 
 EKF::EKF(
-    const Eigen::VectorXd& x, const Eigen::VectorXd& P,
+    const Eigen::VectorXd& x, const Eigen::VectorXd& P_diagonal,
     VectorOperation x_add, VectorOperation x_sub)
-    : x_(x), P_(P.asDiagonal()),
-      x_add_(std::move(x_add)), x_sub_(std::move(x_sub))
+    : x_(x),
+      P_(P_diagonal.asDiagonal()),
+      x_add_(std::move(x_add)),
+      x_sub_(std::move(x_sub))
 {
 }
 
@@ -23,7 +30,7 @@ void EKF::predict(
 
 void EKF::predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q)
 {
-    auto f = [&F](const Eigen::VectorXd& x) -> Eigen::VectorXd
+    const StateFunction f = [&F](const Eigen::VectorXd& x) -> Eigen::VectorXd
     {
         return F * x;
     };
@@ -39,15 +46,17 @@ void EKF::update(
     innovation_ = z_sub(z, h(x_));
     innovation_covariance_ = symmetrize(H * P_ * H.transpose() + R);
 
-    // NIS 和增益 K 共用 S 的分解，通过解方程代替显式求逆。
+    // NIS 与卡尔曼增益共用 S 的 LDLT 分解，通过解方程代替显式求逆。
     const auto S_factor = innovation_covariance_.ldlt();
     const double nis = innovation_.dot(S_factor.solve(innovation_));
     const Eigen::MatrixXd K = S_factor.solve(H * P_).transpose();
     x_ = x_add_(x_, K * innovation_);
 
     // Joseph 形式更新协方差，保留数值稳定性。
-    const Eigen::MatrixXd I_KH = Eigen::MatrixXd::Identity(x_.size(), x_.size()) - K * H;
+    const Eigen::MatrixXd I_KH =
+        Eigen::MatrixXd::Identity(x_.size(), x_.size()) - K * H;
     P_ = symmetrize(I_KH * P_ * I_KH.transpose() + K * R * K.transpose());
+
     record_statistics(nis_statistics_, nis, z.size());
 }
 
@@ -55,7 +64,7 @@ void EKF::update(
     const Eigen::MatrixXd& H, const Eigen::VectorXd& z,
     const Eigen::MatrixXd& R)
 {
-    auto h = [&H](const Eigen::VectorXd& x) -> Eigen::VectorXd
+    const StateFunction h = [&H](const Eigen::VectorXd& x) -> Eigen::VectorXd
     {
         return H * x;
     };
@@ -93,12 +102,12 @@ Eigen::VectorXd EKF::default_subtract(
 
 Eigen::MatrixXd EKF::symmetrize(const Eigen::MatrixXd& value)
 {
-    // 消除浮点运算产生的微小不对称。
     return 0.5 * value + 0.5 * value.transpose();
 }
 
 void EKF::record_statistics(
-    ConsistencyStatistics& statistics, double value, Eigen::Index dimension)
+    ConsistencyStatistics& statistics, const double value,
+    const Eigen::Index dimension)
 {
     if (statistics.samples == 0)
     {
@@ -114,7 +123,8 @@ void EKF::record_statistics(
     const double count = static_cast<double>(statistics.samples);
     const double normalized_value = value / static_cast<double>(dimension);
     statistics.mean += (value - statistics.mean) / count;
-    statistics.normalized_mean += (normalized_value - statistics.normalized_mean) / count;
+    statistics.normalized_mean +=
+        (normalized_value - statistics.normalized_mean) / count;
 }
 
-} // namespace kalman_flitter
+} // namespace kalman_filter

@@ -1,41 +1,53 @@
+/**
+ * @file math_tools.cpp
+ * @brief @ref math_tools.hpp 中声明的数学与时间工具函数的实现。
+ */
+
 #include "math_tools.hpp"
+
 #include <cmath>
-#include <Eigen/Dense>
 
 namespace tools
 {
 
-double limit_euler(const double angle)
+double normalize_angle(const double angle)
 {
+    // std::remainder 将结果限制在 [-pi, pi]；再利用条件分支排除正 pi 端点，
+    // 使最终区间严格为 [-pi, pi)。
     const double wrapped = std::remainder(angle, 2.0 * M_PI);
     return wrapped >= M_PI ? wrapped - 2.0 * M_PI : wrapped;
 }
 
-double delta_time(const std::chrono::steady_clock::time_point& start_time, const std::chrono::steady_clock::time_point& end_time)
+double delta_time(
+    const std::chrono::steady_clock::time_point& start,
+    const std::chrono::steady_clock::time_point& end)
 {
-    return std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(end - start)
+        .count();
 }
 
-double delta_euler(const double euler1, const double euler2)
+double angle_difference(const double from, const double to)
 {
-    double delta = euler2 - euler1;
-    return limit_euler(delta);
+    return normalize_angle(to - from);
 }
 
-double angle_to_euler(const double angle)
+double radians_to_degrees(const double radians)
 {
-    return angle * 180.0 / M_PI;
+    return radians * 180.0 / M_PI;
 }
 
-Eigen::Vector3d xyz_to_ypd(const Eigen::Vector3d& xyz)
+Eigen::Vector3d cartesian_to_ypd(const Eigen::Vector3d& xyz)
 {
-    double x = xyz[0], y = xyz[1], z = xyz[2];
-    double yaw = std::atan2(y, x);
-    double distance_2d = std::hypot(x, y);
-    double pitch = std::atan2(z, distance_2d);
-    double distance = std::hypot(distance_2d, z);
-    Eigen::Vector3d ypd = Eigen::Vector3d(yaw, pitch, distance);
-    return ypd;
+    const double x = xyz[0];
+    const double y = xyz[1];
+    const double z = xyz[2];
+
+    const double yaw = std::atan2(y, x);
+    const double distance_2d = std::hypot(x, y);
+    const double pitch = std::atan2(z, distance_2d);
+    const double distance = std::hypot(distance_2d, z);
+
+    return Eigen::Vector3d(yaw, pitch, distance);
 }
 
 } // namespace tools

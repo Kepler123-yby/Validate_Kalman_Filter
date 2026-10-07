@@ -1,19 +1,24 @@
+/**
+ * @file generator.cpp
+ * @brief @ref motion_generator::Generator 的实现。
+ */
+
 #include "generator.hpp"
+
+#include <chrono>
 
 namespace motion_generator
 {
 
 Generator::Generator(const YAML::Node& config)
 {
-    auto spin_config = config["spin"];
-    auto translation_config = config["translation"];
-    auto generator_config = config["generator"];
-
-    translation_ = std::make_unique<TranslationGenerator>(translation_config);
-    spin_ = std::make_unique<SpinGenerator>(spin_config);
+    // 三个子模块各自从配置中读取自己关心的字段。
+    translation_ = std::make_unique<TranslationGenerator>(config["translation"]);
+    spin_ = std::make_unique<SpinGenerator>(config["spin"]);
     target_ = std::make_unique<Robot>(config);
 
-    update_rate_ = generator_config
+    const auto generator_config = config["generator"];
+    update_period_ms_ = generator_config
         ? generator_config["update_rate"].as<int>(10)
         : 10;
 
@@ -32,9 +37,10 @@ void Generator::motion_loop()
     while (!stop_motion_)
     {
         const auto time = std::chrono::steady_clock::now();
-        const auto translation_state = translation_->update(time);
-        const auto spin_state = spin_->get_states(time);
-        const auto raw_state = make_raw_states(translation_state, spin_state);
+        const TranslationState translation_state = translation_->update(time);
+        const SpinState spin_state = spin_->state_at(time);
+        const Eigen::VectorXd raw_state =
+            make_raw_states(translation_state, spin_state);
 
         {
             std::lock_guard<std::mutex> lock(state_mutex_);
@@ -46,31 +52,20 @@ void Generator::motion_loop()
         }
         state_condition_.notify_all();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(update_rate_));
+        std::this_thread::sleep_for(std::chrono::milliseconds(update_period_ms_));
     }
 }
 
 Eigen::VectorXd Generator::make_raw_states(
-    const TranslationState& translation_state,
-    const SpinState& spin_state) const
+    const TranslationState& translation, const SpinState& spin) const
 {
-    Eigen::VectorXd raw_states(15);
+    Eigen::VectorXd raw_states(RawStateIndex::kRawSize);
     raw_states <<
-        translation_state.position[0],
-        translation_state.speed[0],
-        translation_state.acceleration[0],
-        translation_state.position[1],
-        translation_state.speed[1],
-        translation_state.acceleration[1],
-        translation_state.position[2],
-        translation_state.speed[2],
-        translation_state.acceleration[2],
-        spin_state.yaw,
-        spin_state.speed,
-        spin_state.acceleration,
-        spin_state.forword_radius,
-        spin_state.beside_radius,
-        spin_state.height_diff;
+        translation.position[0], translation.velocity[0], translation.acceleration[0],
+        translation.position[1], translation.velocity[1], translation.acceleration[1],
+        translation.position[2], translation.velocity[2], translation.acceleration[2],
+        spin.yaw, spin.angular_velocity, spin.angular_acceleration,
+        spin.forward_radius, spin.beside_radius, spin.height_difference;
     return raw_states;
 }
 
@@ -93,7 +88,7 @@ GeneratorState Generator::wait_for_next(const uint64_t sequence)
 GeneratorState Generator::copy_state() const
 {
     return GeneratorState{
-        target_->get_states(), target_->get_observation(), target_->get_locked_id(),
+        target_->states(), target_->observation(), target_->locked_id(),
         sequence_, timestamp_};
 }
 
